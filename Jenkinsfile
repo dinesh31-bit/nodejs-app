@@ -1,6 +1,6 @@
 @Library('JenkinsSharedLib') _
 pipeline {
-    agent any
+    agent {label 'nodejs'}
 
     triggers{
         githubPush()
@@ -12,9 +12,6 @@ pipeline {
         timeout(time: 30, unit: 'MINUTES')
     }
 
-    tools {
-        nodejs 'NodeJS-20.19.5' // Ensure this matches the name of the NodeJS installation in Jenkins
-    }
 
     environment {
         REMOTE_HOST = '172.31.3.222' // Replace with your server's IP or hostname
