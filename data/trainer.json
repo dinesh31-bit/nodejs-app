@@ -1,13 +1,14 @@
 {
   "trainer": {
-    "name": "Balaji Reddy Lachhanagari",
+    "name": "Mr Dinesh Reddy",
     "email": "rushitechnoligesbanglore@gmail.com",
-    "phone": "+91-9900012028,+91-8296242028"
+    "phone": "+91-7680041326,+91-7780569156"
   },
   "courses": [
     "DevOps Master Program",
     "AWS with Terraform",
     "Kubernetes Advanced",
     "Azure Admin With Azure DevOps"
+    "GCD end to end"
   ]
 }
