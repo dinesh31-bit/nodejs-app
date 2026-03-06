@@ -1,71 +1,50 @@
-@Library('JenkinsSharedLib') _
-pipeline {
-    agent {label 'nodejs'}
-
-    triggers{
+pipeline{
+    agent any
+    tools{
+        nodejs 'NodeJS 24.14.0'
+    }
+    triggers {
         githubPush()
     }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '5'))
-        disableConcurrentBuilds()
-        timeout(time: 30, unit: 'MINUTES')
-    }
-
-
-    environment {
-        REMOTE_HOST = '172.31.3.222' // Replace with your server's IP or hostname
-        REMOTE_USER = 'ec2-user'
-        REMOTE_PATH = '/home/ec2-user/nodejs-app'
-        SSH_CREDENTIALS = 'NodeServerSSHKey'
-    }
-
-    stages {
-       
-        /* 
-           Stage to install dependencies to ensure the project is ready for deployment
-           It uses npm to install the dependencies defined in package.json. 
-           This is a crucial step to avoid runtime errors due to missing packages.
-           It is executed on the Jenkins agent where the pipeline is running.   
-        */
-        
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
+    stages{
+        stage("git clone"){
+            steps{
+                git branch: 'main', credentialsId: 'dinesh31bitgit', url: 'https://github.com/dinesh31-bit/nodejs-app.git'
             }
         }
-
-        stage('Transfer to Remote Server') {
-            steps {
-                sshagent([env.SSH_CREDENTIALS]) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no  $REMOTE_USER@$REMOTE_HOST "mkdir -p $REMOTE_PATH || true"
-                        rsync -avz --exclude=node_modules --exclude=.git ./ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/
+        stage("install packages to verify weather it is working good or not"){
+            steps{
+                sh "npm install"
+            }
+        }
+        stage("ssh agent"){
+            environment{
+                nodejs_ip = '43.205.110.185'
+            }
+            steps{
+            sshagent(['nodejs-ssh']) {
+                sh '''
+                ssh -o StrictHostKeyChecking=no ec2-user@${nodejs_ip} "mkdir -p /home/ec2-user/nodejs-app/ || true"
+                ssh -o StrictHostKeyChecking=no ec2-user@${nodejs_ip} "rm -rf /home/ec2-user/nodejs-app/*"
+                rsync -avz --exclude=node_modules --exclude=.git ./ ec2-user@${nodejs_ip}:/home/ec2-user/nodejs-app/
+                '''
+                }
+            }
+        }
+        stage("install packages"){
+            environment{
+                nodejs_ip = '43.205.110.185'
+            }
+            steps{
+                sshagent(['nodejs-ssh']) {
+                    sh'''
+                    ssh -o StrictHostKeyChecking=no ec2-user@${nodejs_ip} "cd /home/ec2-user/nodejs-app && 
+                    npm install  && 
+                    npm install -g pm2 && 
+                    pm2 start app.js || pm2 restart app.js"
                     '''
                 }
             }
         }
-
-        stage('Install & Deploy using Local PM2') {
-            steps {
-                sshagent([env.SSH_CREDENTIALS]) {
-                    sh '''
-                        ssh $REMOTE_USER@$REMOTE_HOST "
-                            cd $REMOTE_PATH &&
-                            npm install &&
-                            npx pm2 start app.js --name my-app --update-env || npx pm2 restart my-app
-                        "
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            sendEmailNotifications(currentBuild.currentResult,"balajireddy.urs@gmail.com")
-            sendSlackNotifications("lic-app-team",currentBuild.currentResult)
-            cleanWs()
-        }    
     }
 }
