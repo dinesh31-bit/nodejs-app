@@ -20,7 +20,7 @@ pipeline{
         }
         stage("ssh agent"){
             environment{
-                nodejs_ip = '13.127.169.211'
+                nodejs_ip = '13.126.48.73'
             }
             steps{
             sshagent(['nodejs-ssh']) {
@@ -34,7 +34,7 @@ pipeline{
         }
         stage("install packages"){
             environment{
-                nodejs_ip = '13.127.169.211'
+                nodejs_ip = '13.126.48.73'
             }
             steps{
                 sshagent(['nodejs-ssh']) {
