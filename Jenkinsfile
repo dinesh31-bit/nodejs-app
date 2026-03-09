@@ -1,3 +1,4 @@
+@Library('JenkinsSharedLib') _
 pipeline{
     agent any
     tools{
@@ -52,44 +53,12 @@ pipeline{
             sh "echo 'it will run always'"
         }
         success{
-            emailnotification('success','dineshreddypala31@gmail.com')
-            Slacknotification('devops-notification', 'SUCCESS')
+            SendEmailNotification('success','dineshreddypala31@gmail.com')
+            SendSlackNotification('devops-notification', 'SUCCESS')
         }
         failure{
-            emailnotification('Failure','dineshreddypala31@gmail.com')
-            Slacknotification('devops-notification', 'FAILURE')
+            SendEmailNotification('Failure','dineshreddypala31@gmail.com')
+            SendSlackNotification('devops-notification', 'FAILURE')
         }
     }
-}
-def emailnotification(String buildStatus,String reciver_email){
-
-    def body = """
-    <html>
-    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-        <h2 style="color: #2d87f0;">Jenkins Build Notification</h2>
-        <p><strong>Build Result:</strong> ${buildStatus}</p>
-        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-        <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-    </body>
-    </html>
-    """
-
-    def subject = "${env.JOB_NAME} - ${env.BUILD_NUMBER} - Build ${buildStatus}"
-
-    emailext(
-        subject: subject,
-        body: body,
-        mimeType: 'text/html',
-        to: reciver_email
-    )
-}
- def Slacknotification(String salckChannelName,String buildStatus){
-	  
-	    def color = buildStatus == 'SUCCESS' ? 'good' : (buildStatus == 'UNSTABLE' ? 'warning' : 'danger')
-	    def message = "*${buildStatus}*: Job `${env.JOB_NAME}` - Build #${env.BUILD_NUMBER} \n" +
-	                    "Details: ${env.BUILD_URL}console"
-	      
-          slackSend(channel: salckChannelName, color: color, message: message) 
-	  
 }
